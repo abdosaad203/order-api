@@ -7,10 +7,18 @@ using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("MySQL");
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0))));
+// MySQL Connection
+var connectionString =
+    builder.Configuration.GetConnectionString("Default")
+    ?? builder.Configuration.GetConnectionString("MySQL");
 
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseMySql(
+        connectionString,
+        new MySqlServerVersion(new Version(8, 0))
+    ));
+
+// JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -20,36 +28,48 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
+
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
+
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
+            )
         };
     });
 
 builder.Services.AddAuthorization();
+
 builder.Services.AddControllers()
     .AddJsonOptions(opts =>
     {
-        opts.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        opts.JsonSerializerOptions.ReferenceHandler =
+            System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
+// Catalog API Client
 builder.Services.AddHttpClient("CatalogApi", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["CatalogApi:BaseUrl"] ?? "http://catalog-api:8080");
+    client.BaseAddress = new Uri(
+        builder.Configuration["CatalogApi:BaseUrl"]
+        ?? "http://catalog-api-backend:8080"
+    );
 });
 
-builder.Services.AddHealthChecks()
-    .AddMySql(connectionString!, name: "mysql");
+// Simple healthchecks only
+builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
 app.UseRouting();
+
 app.UseHttpMetrics();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
 app.MapHealthChecks("/health");
 app.MapMetrics();
 
