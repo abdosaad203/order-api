@@ -34,6 +34,6 @@ USER appuser
 
 EXPOSE 8082
 
-ENV ASPNETCORE_URLS=http://+:8082
+ENV ASPNETCORE_URLS=http://+:8080
 
 ENTRYPOINT ["dotnet", "Order.API.dll"]
