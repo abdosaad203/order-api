@@ -52,7 +52,7 @@ builder.Services.AddHttpClient("CatalogApi", client =>
 {
     client.BaseAddress = new Uri(
         builder.Configuration["CatalogApi:BaseUrl"]
-        ?? "http://catalog-api-backend:8080"
+        ?? "http://catalog-api-prod-backend:8080"
     );
 });
 
