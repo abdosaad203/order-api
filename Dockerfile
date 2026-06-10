@@ -32,7 +32,7 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-EXPOSE 8082
+EXPOSE 8080
 
 ENV ASPNETCORE_URLS=http://+:8080
 
